@@ -2,11 +2,12 @@ import socket
 import cv2 as cv
 import numpy as np
 import detection
+import re
 
 host, port = '0.0.0.0', 9002
 MIN_CONF = 0.9
 
-
+# TODO: update transmission to new protocoll
 def recv_all(size, conn):
     buf = b""
     while len(buf) < size:
@@ -43,8 +44,8 @@ def init_socket(host, port, s):
 def send_outputs(pred, conn):
     out = ""
     for output in pred:
-        out += "{} {} {}\n".format(*output).replace(",", "")
-    out += "\x04"
+        out += "{} {} {}\n".format(*output)
+    out = re.sub("[\]\[,]", "", out) + "\x04"
     conn.send(bytes(out, "utf8"))
 
 
