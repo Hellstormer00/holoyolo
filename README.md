@@ -7,7 +7,7 @@ Client and Server for connection between hololens and pc
 ### General
 
 - Transmissions end with "\x04" (EOT) character
-- Regular delimiter between values is a single space
+- Regular delimiter between values is ",\t"
 
 ### Specific
 
