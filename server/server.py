@@ -4,12 +4,14 @@ import numpy as np
 import detection
 import re
 
-host, port = '0.0.0.0', 9002
+host, port = '0.0.0.0', 9001
 MIN_CONF = 0.9
+DEL = b",\t"
+EOM = b"\x04"
 
-# TODO: update transmission to new protocoll
-def recv_all(size, conn):
-    buf = b""
+# FIXME: update transmission to new protocoll
+def recv_all(size, conn, part):
+    buf = part
     while len(buf) < size:
         packet = conn.recv(size - len(buf))
         print(size - len(buf))
@@ -26,9 +28,11 @@ def img_processing(img_bin):
 
 
 def recv_img(conn):
-    img_size = int(conn.recv(1024))
+    # format: GET imgsize img\x04
+    cmd, img_size, img_part = conn.recv(1024).split(DEL)
+    img_size = int(img_size)
     print(f"receiving {img_size} bytes")
-    img = recv_all(img_size, conn)
+    img = recv_all(img_size, conn, img_part)
     print("data:", img[0:20], "...")
     return img
 
@@ -44,9 +48,9 @@ def init_socket(host, port, s):
 def send_outputs(pred, conn):
     out = ""
     for output in pred:
-        out += "{} {} {}\n".format(*output)
-    out = re.sub("[\]\[,]", "", out) + "\x04"
-    conn.send(bytes(out, "utf8"))
+        out += "{0}{3}{1}{3}{2}\n".format(*output, DEL)
+    out = bytes(re.sub("[\]\[,]", "", out), "utf8") + EOM
+    conn.send(out)
 
 
 if __name__ == "__main__":
