@@ -2,9 +2,11 @@ import socket
 import numpy as np
 import cv2 as cv
 
-host, port = "0.0.0.0", 9001
+host, port = "0.0.0.0", 9003
 DEL = b",\t"
 EOM = b"\x04"
+
+classes = open('../assets/coco.names').read().strip().split('\n')
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.connect((host, port))

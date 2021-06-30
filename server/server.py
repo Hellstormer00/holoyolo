@@ -4,12 +4,11 @@ import numpy as np
 import detection
 import re
 
-host, port = '0.0.0.0', 9001
+host, port = '0.0.0.0', 9003
 MIN_CONF = 0.9
 DEL = b",\t"
 EOM = b"\x04"
 
-# FIXME: update transmission to new protocoll
 def recv_all(size, conn, part):
     buf = part
     while len(buf) < size:
@@ -45,17 +44,19 @@ def init_socket(host, port, s):
     print("listening on port", port)
 
 
-def send_outputs(pred, conn):
+def send_outputs(pred, conn, classes):
     out = ""
     for output in pred:
-        out += "{0}{3}{1}{3}{2}\n".format(*output, DEL)
-    out = bytes(re.sub("[\]\[,]", "", out), "utf8") + EOM
+        # FIXME: doesnt format bytes
+        out += "{0}{3}{1}{3}{2}\n".format(output[0], classes[output[1]], output[2], DEL.decode("utf8"))
+    out = bytes(re.sub("[\]\[]", "", out).replace(", ", DEL.decode("utf8")), "utf8") + EOM
     conn.send(out)
 
 
 if __name__ == "__main__":
 
     net, ln = detection.init_net()
+    classes = open('../assets/coco.names').read().strip().split('\n')
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         init_socket(host, port, s)
@@ -76,5 +77,5 @@ if __name__ == "__main__":
                 # cv.imshow("Yaaaay", img)
                 # cv.waitKey(0)
 
-                send_outputs(pred, conn)
+                send_outputs(pred, conn, classes)
                 print("closing connection")
