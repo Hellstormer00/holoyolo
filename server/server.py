@@ -3,8 +3,9 @@ import cv2 as cv
 import numpy as np
 import detection
 
-host, port = '172.22.223.57', 9002
+host, port = '0.0.0.0', 9002
 MIN_CONF = 0.9
+
 
 def recv_all(size, conn):
     buf = b""
@@ -42,8 +43,10 @@ def init_socket(host, port, s):
 def send_outputs(pred, conn):
     out = ""
     for output in pred:
-        out += f"{output[0]},{output[1]},{output[2]}\n"
-    conn.send(bytes(output))
+        out += "{} {} {}\n".format(*output).replace(",", "")
+    out += "\x04"
+    conn.send(bytes(out, "utf8"))
+
 
 if __name__ == "__main__":
 
@@ -57,11 +60,9 @@ if __name__ == "__main__":
             print(f"connected to {addr}")
 
             with conn:
-                # img = recv_img(conn)
-                # img = img_processing(img)
+                img = recv_img(conn)
+                img = img_processing(img)
 
-                img = cv.imread('horse.jpg')
-                
                 net_outputs = detection.get_output(img, net, ln)
                 pred = detection.tidy_output(net_outputs, img, MIN_CONF)
 
