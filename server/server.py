@@ -19,26 +19,29 @@ def img_processing(img_bin):
     img_bin = np.array([el for el in img_bin], dtype="uint8")
     return cv.imdecode(img_bin, cv.IMREAD_UNCHANGED)
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind((host, port))
-    s.listen()
-    print("server initialized")
-    print("listening on port", port)
-    while True:
-        conn, addr = s.accept()
-        print(f"connected to {addr}")
 
-        with conn:
-            img_size = int(conn.recv(1024))
-            print(f"receiving {img_size} bytes")
-
-            img = recv_all(img_size, conn)
-            print("data:", img[0:20], "...")
-            img = img_processing(img)
-            cv.imshow("Yaaaay", img)
-            cv.waitKey(0)
-
-            conn.send(b"OK\n")
-            print("closing connection")
+if __name__ == "__main__":
     
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind((host, port))
+        s.listen()
+        print("server initialized")
+        print("listening on port", port)
+        while True:
+            conn, addr = s.accept()
+            print(f"connected to {addr}")
+
+            with conn:
+                img_size = int(conn.recv(1024))
+                print(f"receiving {img_size} bytes")
+
+                img = recv_all(img_size, conn)
+                print("data:", img[0:20], "...")
+                img = img_processing(img)
+                cv.imshow("Yaaaay", img)
+                cv.waitKey(0)
+
+                conn.send(b"OK\n")
+                print("closing connection")
+        
