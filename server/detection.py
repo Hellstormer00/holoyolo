@@ -20,7 +20,7 @@ def get_output(img, net, ln):
     return outputs
 
 
-def tidy_output(outputs, min_confidence):
+def tidy_output(outputs, img, min_confidence):
     boxes = []
     confidences = []
     classIDs = []
