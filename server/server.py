@@ -47,7 +47,6 @@ def init_socket(host, port, s):
 def send_outputs(pred, conn, classes):
     out = ""
     for output in pred:
-        # FIXME: doesnt format bytes
         out += "{0}{3}{1}{3}{2}\n".format(output[0], classes[output[1]], output[2], DEL.decode("utf8"))
     out = bytes(re.sub("[\]\[]", "", out).replace(", ", DEL.decode("utf8")), "utf8") + EOM
     conn.send(out)
