@@ -1,2 +1,4 @@
 /assets/yolo*
 /server/__pycache__
+/holoyolo/*
+.vscode
