@@ -57,6 +57,25 @@ def send_outputs(pred, conn, classes):
     conn.send(out)
 
 
+def handle_conn(conn, net, ln, classes):
+    with conn:
+        while True:
+            img = recv_img(conn)
+            if img == None:
+                break
+            img = img_processing(img)
+
+            net_outputs = detection.get_output(img, net, ln)
+            pred = detection.tidy_output(net_outputs, img, MIN_CONF)
+
+            # cv.imshow("Yaaaay", img)
+            # cv.waitKey(0)
+
+            send_outputs(pred, conn, classes)
+
+        print("closing connection")
+
+
 if __name__ == "__main__":
 
     net, ln = detection.init_net()
@@ -69,19 +88,7 @@ if __name__ == "__main__":
             conn, addr = s.accept()
             print(f"connected to {addr}")
 
-            with conn:
-                while True:
-                    img = recv_img(conn)
-                    if img == None:
-                        break
-                    img = img_processing(img)
+            handle_conn(conn, net, ln, classes)
 
-                    net_outputs = detection.get_output(img, net, ln)
-                    pred = detection.tidy_output(net_outputs, img, MIN_CONF)
 
-                    # cv.imshow("Yaaaay", img)
-                    # cv.waitKey(0)
 
-                    send_outputs(pred, conn, classes)
-
-                print("closing connection")
