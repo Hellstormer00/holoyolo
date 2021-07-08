@@ -5,7 +5,7 @@ import detection
 import re
 
 host, port = '0.0.0.0', 9003
-MIN_CONF = 0.9
+MIN_CONF = 0.2
 DEL = b",\t"
 EOM = b"\x04"
 
@@ -89,6 +89,3 @@ if __name__ == "__main__":
             print(f"connected to {addr}")
 
             handle_conn(conn, net, ln, classes)
-
-
-

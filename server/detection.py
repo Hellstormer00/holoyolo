@@ -1,10 +1,11 @@
 # YOLO object detection
 import cv2 as cv
 import numpy as np
+import itertools
 
 def init_net():
     net = cv.dnn.readNetFromDarknet(
-        '../assets/yolov3.cfg', '../assets/yolov3.weights')
+        '../assets/yolov3-tiny.cfg', '../assets/yolov3-tiny.weights')
     net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)
 
     ln = net.getLayerNames()
@@ -18,7 +19,6 @@ def get_output(img, net, ln):
     net.setInput(blob)
     outputs = net.forward(ln)
     return outputs
-
 
 def tidy_output(outputs, img, min_confidence):
     boxes = []
@@ -40,11 +40,14 @@ def tidy_output(outputs, img, min_confidence):
                 boxes.append(box)
                 confidences.append(float(confidence))
                 classIDs.append(classID)
-    return list(zip(boxes, classIDs, confidences))
+
+    indices = cv.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
+    finals = list(zip(boxes, classIDs, confidences))
+    return [finals[i] for i in itertools.chain(*indices)]
 
 if __name__ == "__main__":
-    img = cv.imread('horse.jpg')
+    img = cv.imread('../client/dog.jpg')
     classes = open('../assets/coco.names').read().strip().split('\n')
     net, ln = init_net()
     outputs = get_output(img, net, ln)
-    print(len(tidy_output(outputs, 0.9)))
+    print(len(tidy_output(outputs, 0.0)))
