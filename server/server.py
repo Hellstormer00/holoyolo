@@ -13,7 +13,7 @@ def recv_all(size, conn, part):
     buf = part
     while len(buf) < size:
         packet = conn.recv(size - len(buf))
-        print(size - len(buf))
+        print(buf[-1])
         buf += packet
         print(f"received {len(packet)} bytes")
         if not packet:
@@ -28,7 +28,12 @@ def img_processing(img_bin):
 
 def recv_img(conn):
     # format: GET imgsize img\x04
-    cmd, img_size, img_part = conn.recv(1024).split(DEL)
+    msg = conn.recv(1024)
+    print("msg: ", msg[:20])
+    if msg[:4] == b"STOP":
+        print("Got STOP command")
+        return None
+    cmd, img_size, img_part = msg.split(DEL)
     img_size = int(img_size)
     print(f"receiving {img_size} bytes")
     img = recv_all(img_size, conn, img_part)
@@ -47,7 +52,6 @@ def init_socket(host, port, s):
 def send_outputs(pred, conn, classes):
     out = ""
     for output in pred:
-        # FIXME: doesnt format bytes
         out += "{0}{3}{1}{3}{2}\n".format(output[0], classes[output[1]], output[2], DEL.decode("utf8"))
     out = bytes(re.sub("[\]\[]", "", out).replace(", ", DEL.decode("utf8")), "utf8") + EOM
     conn.send(out)
@@ -66,16 +70,18 @@ if __name__ == "__main__":
             print(f"connected to {addr}")
 
             with conn:
-                img = recv_img(conn)
-                img = img_processing(img)
+                while True:
+                    img = recv_img(conn)
+                    if img == None:
+                        break
+                    img = img_processing(img)
 
-                net_outputs = detection.get_output(img, net, ln)
-                pred = detection.tidy_output(net_outputs, img, MIN_CONF)
+                    net_outputs = detection.get_output(img, net, ln)
+                    pred = detection.tidy_output(net_outputs, img, MIN_CONF)
 
-                print(pred)
+                    # cv.imshow("Yaaaay", img)
+                    # cv.waitKey(0)
 
-                # cv.imshow("Yaaaay", img)
-                # cv.waitKey(0)
+                    send_outputs(pred, conn, classes)
 
-                send_outputs(pred, conn, classes)
                 print("closing connection")
