@@ -14,7 +14,7 @@ def timer(name):
             t1 = time.time()
             out = func(*args)
             t2 = time.time()
-            print("Timing for {}: {:.2f} fps".format(name, 1 /(t2 - t1)))
+            print("Timing for {}: {:.2f} s".format(name, t2 - t1))
             return out
         return wrapper
     return inner
@@ -40,10 +40,9 @@ classes = open('../assets/coco.names').read().strip().split('\n')
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.connect((host, port))
 
-    img = read_img("dog.jpg")
-
     while True:
-       print("Dog:\n" + send_pic(img)) 
+        img = read_img("dog.jpg")
+        print("Dog:\n" + send_pic(img)) 
 
     s.sendall(b"STOP")
 
