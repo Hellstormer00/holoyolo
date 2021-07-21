@@ -3,20 +3,23 @@ import cv2 as cv
 import numpy as np
 import detection
 import re
+import logging
 
 host, port = '0.0.0.0', 9003
 MIN_CONF = 0.2
 DEL = b",\t"
 EOM = b"\x04"
 
+logging.basicConfig(format='[%(levelname)s] %(asctime)s %(message)s',
+                    datefmt='%H:%M:%S', level=logging.INFO)
+
 
 def recv_all(size, conn, part):
     buf = part
     while len(buf) < size:
         packet = conn.recv(size - len(buf))
-        print(buf[-1])
         buf += packet
-        print(f"received {len(packet)} bytes")
+        logging.info(f"received {len(packet)} bytes")
         if not packet:
             return None
     return buf
@@ -30,15 +33,15 @@ def img_processing(img_bin):
 def recv_img(conn):
     # format: GET imgsize img\x04
     msg = conn.recv(1024)
-    print("msg: ", msg[:20])
+    logging.debug("msg: ", msg[:20])
     if msg[:4] == b"STOP":
-        print("Got STOP command")
+        logging.debug("Got STOP command")
         return None
     cmd, img_size, img_part = msg.split(DEL)
     img_size = int(img_size)
-    print(f"receiving {img_size} bytes")
+    logging.debug(f"receiving {img_size} bytes")
     img = recv_all(img_size, conn, img_part)
-    print("data:", img[0:20], "...")
+    logging.debug("data:", img[0:20], "...")
     return img
 
 
@@ -46,8 +49,8 @@ def init_socket(host, port, s):
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((host, port))
     s.listen()
-    print("server initialized")
-    print("listening on port", port)
+    logging.info("server initialized")
+    logging.info("listening on port", port)
 
 
 def send_outputs(pred, conn, classes):
@@ -63,25 +66,25 @@ def send_outputs(pred, conn, classes):
 def handle_conn(conn, net, ln, classes):
     with conn:
         while True:
-            print("Waiting for image")
+            logging.info("Waiting for image")
             img = recv_img(conn)
             if img == None:
                 break
 
-            print("Decoding image")
+            logging.debug("Decoding image")
             img = img_processing(img)
 
-            print("Processing Image in yolo")
+            logging.info("Processing Image in yolo")
             net_outputs = detection.get_output(img, net, ln)
             pred = detection.tidy_output(net_outputs, img, MIN_CONF)
 
             # cv.imshow("Yaaaay", img)
             # cv.waitKey(0)
 
-            print("Sending Outputs")
+            logging.info("Sending Outputs")
             send_outputs(pred, conn, classes)
 
-        print("closing connection")
+        logging.info("closing connection")
 
 
 if __name__ == "__main__":

@@ -3,9 +3,10 @@ import cv2 as cv
 import numpy as np
 import itertools
 
+
 def init_net():
     net = cv.dnn.readNetFromDarknet(
-        '../assets/yolov3-tiny.cfg', '../assets/yolov3-tiny.weights')
+        '../assets/yolov3.cfg', '../assets/yolov3.weights')
     net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)
 
     ln = net.getLayerNames()
@@ -19,6 +20,7 @@ def get_output(img, net, ln):
     net.setInput(blob)
     outputs = net.forward(ln)
     return outputs
+
 
 def tidy_output(outputs, img, min_confidence):
     boxes = []
@@ -44,6 +46,7 @@ def tidy_output(outputs, img, min_confidence):
     indices = cv.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
     finals = list(zip(boxes, classIDs, confidences))
     return [finals[i] for i in itertools.chain(*indices)]
+
 
 if __name__ == "__main__":
     img = cv.imread('../client/dog.jpg')
