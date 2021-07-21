@@ -9,6 +9,7 @@ MIN_CONF = 0.2
 DEL = b",\t"
 EOM = b"\x04"
 
+
 def recv_all(size, conn, part):
     buf = part
     while len(buf) < size:
@@ -52,25 +53,32 @@ def init_socket(host, port, s):
 def send_outputs(pred, conn, classes):
     out = ""
     for output in pred:
-        out += "{0}{3}{1}{3}{2}\n".format(output[0], classes[output[1]], output[2], DEL.decode("utf8"))
-    out = bytes(re.sub("[\]\[]", "", out).replace(", ", DEL.decode("utf8")), "utf8") + EOM
+        out += "{0}{3}{1}{3}{2}\n".format(
+            output[0], classes[output[1]], output[2], DEL.decode("utf8"))
+    out = bytes(re.sub("[\]\[]", "", out).replace(
+        ", ", DEL.decode("utf8")), "utf8") + EOM
     conn.send(out)
 
 
 def handle_conn(conn, net, ln, classes):
     with conn:
         while True:
+            print("Waiting for image")
             img = recv_img(conn)
             if img == None:
                 break
+
+            print("Decoding image")
             img = img_processing(img)
 
+            print("Processing Image in yolo")
             net_outputs = detection.get_output(img, net, ln)
             pred = detection.tidy_output(net_outputs, img, MIN_CONF)
 
             # cv.imshow("Yaaaay", img)
             # cv.waitKey(0)
 
+            print("Sending Outputs")
             send_outputs(pred, conn, classes)
 
         print("closing connection")
