@@ -50,7 +50,7 @@ def init_socket(host, port, s):
     s.bind((host, port))
     s.listen()
     logging.info("server initialized")
-    logging.info("listening on port", port)
+    logging.info(f"listening on port {port}")
 
 
 def send_outputs(pred, conn, classes):
